@@ -1,0 +1,10 @@
+.idea/
+
+*.db
+
+*.venv
+.egg-*
+*.so
+
+*.py[cod]
+
