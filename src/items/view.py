@@ -60,7 +60,7 @@ def add_item():
 @app.route('%sitems' % app.config.get('API_PATH'))
 def get_items_list():
     flash('New items was successfully added')
-    items = [row.serialize() for row in db.session.query(Item).all()]
+    items = [row.serialize() for row in db.session.query(Item).all() if not row.exired()]
     response = jsonify(status='ok', items=items)
     return response
 

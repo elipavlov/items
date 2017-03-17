@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask_sqlalchemy import SQLAlchemy
 from .exceptions import DataExtractionError
@@ -41,11 +41,30 @@ class Item(db.Model):
                 else:
                     setattr(self, key, data[key])
 
+    def exired(self):
+        return (datetime.now() - self.start_time) > timedelta(days=self.days, seconds=3600*12)
+
     def serialize(self):
+        tdl = (datetime.now() - self.start_time)
+        if tdl.days >= self.days:
+            perc = self.end_percent
+            price = self.start_price*self.end_percent*0.01
+            is_min = True
+        else:
+            is_min = False
+            perc = (100 - ((100-self.end_percent)/self.days)*tdl.days)
+            price = self.start_price \
+                * perc\
+                * 0.01
+
         res = dict(
             id=self.id,
-            current_price=self.start_price,
-            is_price_min=False
+            is_price_min=is_min,
+            current_price=price,
+            # start_price=self.start_price,
+            # percent=perc,
+            # days=tdl.days,
+            # start=self.start_time,
         )
         return res
 
