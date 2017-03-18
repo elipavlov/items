@@ -59,8 +59,10 @@ def add_item():
 
 @app.route('%sitems' % app.config.get('API_PATH'))
 def get_items_list():
-    flash('New items was successfully added')
-    items = [row.serialize() for row in db.session.query(Item).all() if not row.exired()]
+    items = [row.to_response()
+             for row in db.session.query(Item)
+                 .filter((Item.start_time + Item.days*86400 + 12*86400) < db.func.current_date())
+             if not row.expired()]
     response = jsonify(status='ok', items=items)
     return response
 
@@ -68,11 +70,26 @@ def get_items_list():
 @app.route('%sitems/' % app.config.get('API_PATH'), defaults={'path': ''})
 @app.route('%sitems/<path:path>' % app.config.get('API_PATH'))
 def get_item(path):
-    flash('New items was successfully added')
-    # response = jsonify(status='ok')
-    response = app.response_class(
-        response=json.dumps(dict(status='ok')),
-        status=200,
-        mimetype='application/json'
-    )
+    if not path:
+        response = _process_error_response(ValueError('Wrong requested id'))
+    else:
+        item = db.session.query(Item).filter(Item.id == path).first()
+
+        if not item:
+            response = app.response_class(
+                response=json.dumps(dict(status='not found')),
+                status=404,
+                mimetype='application/json'
+            )
+        else:
+            if item.expired():
+                db.session.delete(item)
+                db.session.commit()
+                response = app.response_class(
+                    response=json.dumps(dict(status='not found')),
+                    status=404,
+                    mimetype='application/json'
+                )
+            else:
+                response = jsonify(item.to_response())
     return response
