@@ -1,0 +1,6 @@
+recursive-include src/ *.py *.cfg
+
+recursive-exclude . run.py
+
+prune dist/ *.*
+

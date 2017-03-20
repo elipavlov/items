@@ -1,7 +1,6 @@
 # coding=utf-8
 
 from logging import getLogger
-from .config import app
 
 logger = getLogger(__name__)
 
